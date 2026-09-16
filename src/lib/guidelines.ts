@@ -3,6 +3,8 @@
 // Kept as data (not prose in a prompt file) so the form, the AI prompt, and any
 // future validation logic all read from one place.
 
+import type { GeneratedAssignment, QualityLevel } from "./schema";
+
 export const LANES = {
   A: {
     label: "Lane A — Assured (supervised)",
@@ -180,4 +182,129 @@ Oral verification plan: ${input.oralVerification}
 Due date (optional, may be left as a placeholder): ${input.dueDate || "(leave as a placeholder like '[3 weeks from issue]')"}
 
 Apply the AI Role Level's weight band from the system instructions to build the rubric. Ensure Lane and AI Role Level are internally consistent (Level 1 only pairs with Lane A).`;
+}
+
+// ---------------------------------------------------------------------------
+// D.1 — The AI Stress Test (mandatory before release)
+//
+// "1. Paste your assignment brief, exactly as students will receive it, into
+//  a capable AI model. 2. Ask it to produce the best submission it can, with
+//  no further guidance. 3. Mark that output honestly against your own
+//  rubric, criterion by criterion. 4. Record the score... 5. Identify which
+//  criteria the model satisfied — those are your substitutable criteria."
+// ---------------------------------------------------------------------------
+
+export function buildStressTestAttemptSystemPrompt(): string {
+  return `You are a highly capable AI assistant. You have been handed a university assignment brief exactly as a student would receive it. Your job is to produce the single best submission you can, using no further guidance beyond what is written in the brief — do not ask clarifying questions, do not hold back, and do not mention that you are an AI or that this is a test. Write the actual deliverable (the report, code, analysis, proposal, etc.) as completely as you can within a reasonable length for the marks available.
+
+You cannot fabricate things the brief requires be genuinely yours: if it calls for personally collected field data, a real interview, a real staged decision log kept over time, or an in-person oral defence, do not invent fake specifics as if they were real (that would be dishonest); instead produce the strongest version of the submission that is honestly possible for an AI working alone in one sitting, and where a required element is simply impossible for you to supply (e.g. attending a viva), state briefly, in one line at the very end under a heading "Limitations of this AI attempt", what you could not genuinely provide. This is essential — it is exactly what the stress test needs to see.`;
+}
+
+export function buildStressTestAttemptUserPrompt(data: GeneratedAssignment): string {
+  return `ASSIGNMENT BRIEF
+
+Course: ${data.identification.courseCode} — ${data.identification.courseTitle}
+Component: ${data.identification.component} (${data.identification.totalMarks} marks)
+
+Course Outcome: ${data.whatThisAssesses.courseOutcome}
+Miller tier: ${data.whatThisAssesses.millerTier}
+
+The task:
+${data.taskDescription}
+
+Your context anchor:
+${data.contextAnchor}
+
+Stages and checkpoints:
+${data.stages.map((s) => `- ${s.name} (due ${s.dueOffset}): submit ${s.artifact}`).join("\n")}
+
+AI use permitted: ${data.aiUse.permitted.join("; ")}
+AI use not permitted: ${data.aiUse.notPermitted.join("; ")}
+
+How you will be marked:
+${data.markingSummary}
+
+Produce your best complete submission now.`;
+}
+
+export function buildStressTestMarkingSystemPrompt(): string {
+  return `You are an honest, strict external examiner applying LPU's rubric exactly as written. You will be given a rubric (criteria, weights, and four quality-level descriptors each: Outstanding/Proficient/Developing/Not yet demonstrated) and a submission that was produced entirely by an AI model with no genuine process evidence, no real staged decision log, and no ability to attend an oral defence.
+
+Mark strictly against the literal wording of each descriptor — do not be lenient just because the writing is fluent. For any criterion whose descriptors require something an AI working alone cannot genuinely supply (a real decision log, real staged progression, real defence, real verified primary-source checking, real personal/field experience), score that criterion honestly low (Developing or Not yet demonstrated) unless the submission's own "Limitations" section and content clearly earn a higher level on the actual wording of the descriptor. Use exactly the criterion names you were given, one score per criterion, no more and no fewer.`;
+}
+
+export function buildStressTestMarkingUserPrompt(
+  data: GeneratedAssignment,
+  submission: string,
+): string {
+  const rubricText = data.rubric
+    .map(
+      (c) => `Criterion: ${c.name} (${c.family}, weight ${c.weightPercent}%)
+  Outstanding: ${c.levels.outstanding}
+  Proficient: ${c.levels.proficient}
+  Developing: ${c.levels.developing}
+  Not yet demonstrated: ${c.levels.notYetDemonstrated}`,
+    )
+    .join("\n\n");
+
+  return `RUBRIC
+
+${rubricText}
+
+SUBMISSION TO MARK (produced by an AI model, no further guidance)
+
+${submission}
+
+Score every criterion listed above by name, then give 2-4 concrete recommendations for the faculty member per D.1 step 6: strengthen the context anchor, the staged evidence, the decision log, or the defence — whichever would most reduce the criteria this AI attempt satisfied.`;
+}
+
+// D.1 "Interpreting the result" — fixed wording from the guideline, keyed by
+// overall band, so the app never has to trust a model to phrase this itself.
+export const STRESS_TEST_INTERPRETATION: Record<QualityLevel, string> = {
+  Outstanding:
+    "The model scored at Outstanding: this task, as written, measures nothing about the student. Redesign it — do not merely add a warning.",
+  Proficient:
+    "The model scored at Proficient: this is typical for an unmodified traditional task. Strengthen the context anchor and the staged evidence; a well-anchored revision should push the score down to Developing.",
+  Developing:
+    "The model scored at Developing: this is acceptable for most Level 2-3 tasks. The remaining marks depend on the student.",
+  "Not yet demonstrated":
+    "The model scored at Not yet demonstrated: the task is well anchored against AI substitution — but double-check that it is still achievable by a student in the time allowed. A task no model can attempt is sometimes a task no student can either.",
+};
+
+// C.3's four quality bands, using each band's midpoint as its representative score.
+const LEVEL_MIDPOINT: Record<QualityLevel, number> = {
+  Outstanding: 93,
+  Proficient: 75.5,
+  Developing: 53,
+  "Not yet demonstrated": 20,
+};
+
+export function scoreToLevel(percent: number): QualityLevel {
+  if (percent >= 86) return "Outstanding";
+  if (percent >= 66) return "Proficient";
+  if (percent >= 41) return "Developing";
+  return "Not yet demonstrated";
+}
+
+// Deterministically rolls up per-criterion levels into one overall band,
+// weighted by each criterion's own weightPercent from the generated rubric —
+// rather than asking the model to self-report an overall score.
+export function computeOverallStressTestScore(
+  rubric: GeneratedAssignment["rubric"],
+  criterionScores: { criterionName: string; level: QualityLevel }[],
+): { overallScorePercent: number; overallLevel: QualityLevel } {
+  let weightedSum = 0;
+  let totalWeight = 0;
+  for (const rubricCriterion of rubric) {
+    const scored = criterionScores.find(
+      (s) => s.criterionName.trim().toLowerCase() === rubricCriterion.name.trim().toLowerCase(),
+    );
+    // A criterion the marking model failed to score is treated conservatively
+    // (Not yet demonstrated) rather than silently dropped from the average.
+    const level = scored?.level ?? "Not yet demonstrated";
+    weightedSum += LEVEL_MIDPOINT[level] * rubricCriterion.weightPercent;
+    totalWeight += rubricCriterion.weightPercent;
+  }
+  const overallScorePercent = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
+  return { overallScorePercent, overallLevel: scoreToLevel(overallScorePercent) };
 }

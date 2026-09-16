@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { getAssignment } from "@/lib/db";
 import AssignmentResult from "@/components/AssignmentResult";
+import StressTestPanel from "@/components/StressTestPanel";
 
 export default async function HistoryDetailPage({
   params,
@@ -29,6 +30,14 @@ export default async function HistoryDetailPage({
         </a>
       </div>
       <AssignmentResult data={row.data} />
+
+      <div className="mt-6">
+        <StressTestPanel
+          assignmentId={row.id}
+          assignment={row.data}
+          initialResult={row.stress_test}
+        />
+      </div>
     </div>
   );
 }

@@ -90,3 +90,46 @@ export const GenerateInputSchema = z.object({
 });
 
 export type GenerateInput = z.infer<typeof GenerateInputSchema>;
+
+// D.1 — The AI Stress Test. Four quality levels, matching the rubric's own bands.
+export const QUALITY_LEVELS = [
+  "Outstanding",
+  "Proficient",
+  "Developing",
+  "Not yet demonstrated",
+] as const;
+export const QualityLevelSchema = z.enum(QUALITY_LEVELS);
+export type QualityLevel = (typeof QUALITY_LEVELS)[number];
+
+export const StressTestCriterionScoreSchema = z.object({
+  criterionName: z.string().describe("Must exactly match one of the rubric's criterion names."),
+  level: QualityLevelSchema,
+  justification: z
+    .string()
+    .describe("One or two sentences: why this AI-produced submission earned this level on this criterion."),
+});
+
+// What the marking model must return — the deterministic parts (overall band,
+// interpretation, substitutable criteria) are computed in code from the rubric's
+// own weights, not left to the model, so the result stays anchored to C.3/D.1.
+export const StressTestMarkingSchema = z.object({
+  criterionScores: z.array(StressTestCriterionScoreSchema),
+  recommendations: z
+    .array(z.string())
+    .describe(
+      "2-4 concrete next steps drawn from D.1 step 6: strengthen the context anchor, the staged evidence, the decision log, or the defence.",
+    ),
+});
+
+export const StressTestResultSchema = z.object({
+  fullSubmission: z.string(),
+  criterionScores: z.array(StressTestCriterionScoreSchema),
+  recommendations: z.array(z.string()),
+  overallLevel: QualityLevelSchema,
+  overallScorePercent: z.number(),
+  interpretation: z.string(),
+  substitutableCriteria: z.array(z.string()),
+  generatedAt: z.string(),
+});
+
+export type StressTestResult = z.infer<typeof StressTestResultSchema>;

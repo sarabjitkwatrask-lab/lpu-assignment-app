@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import AssignmentResult from "@/components/AssignmentResult";
+import StressTestPanel from "@/components/StressTestPanel";
 import type { GeneratedAssignment } from "@/lib/schema";
 import {
   AI_ROLE_LEVELS,
@@ -298,6 +299,10 @@ export default function GeneratePage() {
             </div>
           </div>
           <AssignmentResult data={result.data} />
+
+          <div className="mt-6">
+            <StressTestPanel assignmentId={result.id} assignment={result.data} />
+          </div>
         </div>
       )}
     </div>
