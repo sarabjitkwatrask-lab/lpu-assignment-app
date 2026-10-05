@@ -1,33 +1,47 @@
-import { notFound } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { notFound, redirect } from "next/navigation";
+import { getUser } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import { getAssignment } from "@/lib/db";
 import AssignmentResult from "@/components/AssignmentResult";
 import StressTestPanel from "@/components/StressTestPanel";
+import { deleteAssignmentAction } from "../actions";
 
 export default async function HistoryDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { userId } = await auth();
-  if (!userId) return null;
-
   const { id } = await params;
-  const row = await getAssignment(userId, id);
+  const user = await getUser();
+  if (!user) redirect(`/login?next=/history/${id}`);
+
+  const supabase = await createClient();
+  const row = await getAssignment(supabase, id);
   if (!row) notFound();
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <div className="mb-6 flex items-center justify-between">
-        <p className="text-sm text-slate-500">
-          Generated {new Date(row.created_at).toLocaleString()}
+    <div className="mx-auto max-w-5xl px-6 py-10">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-ink-faint">
+          Generated {new Date(row.created_at).toLocaleString("en-IN")}
         </p>
-        <a
-          href={`/api/download/${row.id}`}
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100"
-        >
-          Download as Word (.docx)
-        </a>
+        <div className="flex gap-3">
+          <a
+            href={`/api/download/${row.id}`}
+            className="rounded-lg border border-line bg-raised px-4 py-2 text-sm font-semibold hover:border-ink-faint"
+          >
+            Download as Word (.docx)
+          </a>
+          <form action={deleteAssignmentAction}>
+            <input type="hidden" name="id" value={row.id} />
+            <button
+              type="submit"
+              className="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-bad hover:border-bad-line hover:bg-bad-soft"
+            >
+              Delete
+            </button>
+          </form>
+        </div>
       </div>
       <AssignmentResult data={row.data} />
 

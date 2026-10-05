@@ -1,4 +1,5 @@
-import { auth } from "@clerk/nextjs/server";
+import { getUser } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import {
   Document,
   Packer,
@@ -49,13 +50,14 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { userId } = await auth();
-  if (!userId) {
+  const user = await getUser();
+  if (!user) {
     return new Response("Unauthorized", { status: 401 });
   }
 
   const { id } = await params;
-  const row = await getAssignment(userId, id);
+  const supabase = await createClient();
+  const row = await getAssignment(supabase, id);
   if (!row) {
     return new Response("Not found", { status: 404 });
   }

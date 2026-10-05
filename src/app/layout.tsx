@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { ClerkProvider, Show, SignInButton, UserButton } from "@clerk/nextjs";
+import { Public_Sans, Source_Serif_4 } from "next/font/google";
 import Link from "next/link";
+import { getUser } from "@/lib/auth";
+import { signOut } from "./login/actions";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const publicSans = Public_Sans({
+  variable: "--font-public-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const sourceSerif = Source_Serif_4({
+  variable: "--font-source-serif",
   subsets: ["latin"],
 });
 
@@ -20,45 +21,52 @@ export const metadata: Metadata = {
     "Generate LPU-compliant assignment briefs and grading rubrics from the Designing Assignments and Assessment Rubrics in the AI Era guideline.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const user = await getUser();
+
   return (
-    <ClerkProvider>
-      <html
-        lang="en"
-        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      >
-        <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
-          <header className="border-b border-slate-200 bg-white">
-            <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-              <Link href="/" className="font-semibold tracking-tight text-slate-900">
-                LPU Assignment &amp; Rubric Designer
-              </Link>
-              <nav className="flex items-center gap-4 text-sm">
-                <Show when="signed-in">
-                  <Link href="/generate" className="text-slate-600 hover:text-slate-900">
+    <html lang="en" className={`${publicSans.variable} ${sourceSerif.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col">
+        <header className="border-b border-line">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+            <Link href="/" className="font-serif text-lg font-semibold text-ink">
+              LPU Assignment &amp; Rubric Designer
+            </Link>
+            <nav className="flex items-center gap-5 text-sm">
+              {user ? (
+                <>
+                  <Link href="/generate" className="font-medium text-ink-soft hover:text-ink">
                     New assignment
                   </Link>
-                  <Link href="/history" className="text-slate-600 hover:text-slate-900">
+                  <Link href="/history" className="font-medium text-ink-soft hover:text-ink">
                     History
                   </Link>
-                  <UserButton />
-                </Show>
-                <Show when="signed-out">
-                  <SignInButton mode="modal">
-                    <button className="rounded-md bg-slate-900 px-3 py-1.5 text-white hover:bg-slate-700">
-                      Sign in
+                  <span className="hidden text-ink-faint sm:inline">{user.email}</span>
+                  <form action={signOut}>
+                    <button
+                      type="submit"
+                      className="rounded-lg border border-line px-3 py-1.5 font-semibold text-ink hover:border-ink-faint hover:bg-raised"
+                    >
+                      Sign out
                     </button>
-                  </SignInButton>
-                </Show>
-              </nav>
-            </div>
-          </header>
-          <main className="flex-1">{children}</main>
-          <footer className="border-t border-slate-200 py-4 text-center text-xs text-slate-400">
-            Built on LPU&apos;s &ldquo;Designing Assignments and Assessment Rubrics in the AI Era&rdquo; guideline.
-          </footer>
-        </body>
-      </html>
-    </ClerkProvider>
+                  </form>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="rounded-lg border border-line px-3 py-1.5 font-semibold text-ink hover:border-ink-faint hover:bg-raised"
+                >
+                  Sign in
+                </Link>
+              )}
+            </nav>
+          </div>
+        </header>
+        <main className="flex-1">{children}</main>
+        <footer className="border-t border-line px-6 py-6 text-center text-xs text-ink-faint">
+          Built on LPU&rsquo;s &ldquo;Designing Assignments and Assessment Rubrics in the AI Era&rdquo; guideline.
+        </footer>
+      </body>
+    </html>
   );
 }

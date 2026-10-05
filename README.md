@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LPU Assignment & Rubric Designer
 
-## Getting Started
+Generates LPU-compliant assignment briefs and grading rubrics from the guideline
+*Designing Assignments and Assessment Rubrics in the AI Era* (Lane / AI Role Level /
+Miller tier), and includes the guideline's D.1 **AI Stress Test**.
 
-First, run the development server:
+**Stack:** Next.js 16 (App Router) · Tailwind CSS 4 · Supabase (auth + Postgres with row-level
+security) · Claude API · Word export via `docx` · hosted on Vercel.
+
+## Environment variables
+
+| Name | Where | Notes |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Vercel + local | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Vercel + local | Public (publishable) key — safe in the browser |
+| `ANTHROPIC_API_KEY` | Vercel + local | **Secret.** Server-only. Without it the app runs but generation returns "AI service not configured" |
+| `ANTHROPIC_MODEL` | optional | Default `claude-opus-5` |
+| `ALLOWED_EMAIL_DOMAINS` | optional | e.g. `lpu.co.in,lpu.in` to limit sign-up and AI use |
+| `DAILY_GENERATION_LIMIT` / `DAILY_STRESS_TEST_LIMIT` | optional | Per-account caps per 24h (defaults 15 / 10) |
+
+## Supabase setup
+
+1. Create/choose a Supabase project and run [`supabase/schema.sql`](supabase/schema.sql) in the SQL editor.
+2. **Authentication → URL Configuration:** add your site (e.g. `https://your-app.vercel.app/**`)
+   to *Redirect URLs* so confirmation emails return to the app. (Add — don't replace — if the
+   project is shared with another app.)
+3. Optional: **Authentication → Providers → Email** controls whether new users must confirm
+   their email.
+
+## Run locally
 
 ```bash
+npm install
+cp .env.local.example .env.local   # fill in values
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Security model
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Auth: Supabase Auth, session cookies refreshed in `src/proxy.ts`; server code trusts only `getClaims()` (verified JWT).
+- Data: every table has row-level security — users can only read/modify their own rows. No service-role key is used anywhere.
+- AI endpoints require sign-in, honour the optional email-domain allow-list, and enforce per-account daily caps.

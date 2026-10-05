@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -71,41 +71,41 @@ export default function GeneratePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-2xl font-bold text-slate-900">Create a new assignment</h1>
-      <p className="mt-1 text-sm text-slate-600">
+      <h1 className="text-2xl font-bold text-ink">Create a new assignment</h1>
+      <p className="mt-1 text-sm text-ink-soft">
         Answer these questions and the app will apply LPU&apos;s Lane / AI Role Level /
         Miller tier framework to build a compliant brief and rubric.
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 grid gap-6 md:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-slate-700">Course code</label>
+          <label className="block text-sm font-medium text-ink">Course code</label>
           <input
             name="courseCode"
             placeholder="e.g. CSE301"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">
-            Course title <span className="text-rose-600">*</span>
+          <label className="block text-sm font-medium text-ink">
+            Course title <span className="text-bad">*</span>
           </label>
           <input
             name="courseTitle"
             required
             placeholder="e.g. Database Management Systems"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700">
-            Discipline / School <span className="text-rose-600">*</span>
+          <label className="block text-sm font-medium text-ink">
+            Discipline / School <span className="text-bad">*</span>
           </label>
           <select
             name="discipline"
             required
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
           >
             {DISCIPLINES.map((d) => (
               <option key={d} value={d}>
@@ -115,52 +115,52 @@ export default function GeneratePage() {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Total marks</label>
+          <label className="block text-sm font-medium text-ink">Total marks</label>
           <input
             name="totalMarks"
             placeholder="e.g. 20"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
           />
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-slate-700">
-            Topic / theme for this assignment <span className="text-rose-600">*</span>
+          <label className="block text-sm font-medium text-ink">
+            Topic / theme for this assignment <span className="text-bad">*</span>
           </label>
           <input
             name="topic"
             required
             placeholder="e.g. Designing a normalized schema for a campus service"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
           />
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-slate-700">
-            Course Outcome this task assesses <span className="text-rose-600">*</span>
+          <label className="block text-sm font-medium text-ink">
+            Course Outcome this task assesses <span className="text-bad">*</span>
           </label>
           <textarea
             name="courseOutcome"
             required
             rows={2}
             placeholder="Paste the CO wording, e.g. 'CO3: Design and normalize relational database schemas for real-world applications.'"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
           />
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-ink">
             Protected KSAs (skills that must be proven without relying on AI)
           </label>
           <input
             name="protectedKSAs"
             placeholder="Leave blank and the app will infer 2-3, or list your own, comma-separated"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
           />
         </div>
 
         <fieldset className="md:col-span-2">
-          <legend className="text-sm font-medium text-slate-700">
+          <legend className="text-sm font-medium text-ink">
             Will students complete this under your supervision, or on their own time?
           </legend>
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
@@ -168,7 +168,7 @@ export default function GeneratePage() {
               <label
                 key={key}
                 className={`cursor-pointer rounded-md border p-3 text-sm ${
-                  lane === key ? "border-slate-900 bg-slate-50" : "border-slate-300"
+                  lane === key ? "border-accent bg-paper" : "border-line"
                 }`}
               >
                 <input
@@ -185,20 +185,20 @@ export default function GeneratePage() {
                   }}
                 />
                 <strong>{LANES[key].label}</strong>
-                <p className="mt-1 text-xs text-slate-500">{LANES[key].description}</p>
+                <p className="mt-1 text-xs text-ink-soft">{LANES[key].description}</p>
               </label>
             ))}
           </div>
         </fieldset>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-ink">
             How much should AI tools be part of this task?
           </label>
           <select
             value={aiRoleLevel}
             onChange={(e) => setAiRoleLevel(e.target.value as AiLevelKey)}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
           >
             {availableLevels.map((k) => (
               <option key={k} value={k}>
@@ -206,17 +206,17 @@ export default function GeneratePage() {
               </option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-slate-500">{AI_ROLE_LEVELS[aiRoleLevel].plain}</p>
+          <p className="mt-1 text-xs text-ink-soft">{AI_ROLE_LEVELS[aiRoleLevel].plain}</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-ink">
             How deep should mastery go?
           </label>
           <select
             name="millerTier"
             required
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
           >
             {Object.entries(MILLER_TIERS).map(([key, desc]) => (
               <option key={key} value={key}>
@@ -227,7 +227,7 @@ export default function GeneratePage() {
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-ink">
             Context anchor (the site, dataset, client, or case that makes this submission
             theirs)
           </label>
@@ -235,18 +235,18 @@ export default function GeneratePage() {
             name="contextAnchor"
             rows={2}
             placeholder="Leave blank and the app will propose one appropriate to your discipline"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-ink">
             Oral verification
           </label>
           <select
             name="oralVerification"
             required
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
           >
             {ORAL_VERIFICATION_OPTIONS.map((o) => (
               <option key={o} value={o}>
@@ -257,13 +257,13 @@ export default function GeneratePage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-ink">
             Due date (optional)
           </label>
           <input
             name="dueDate"
             placeholder="e.g. 3 weeks from issue"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
           />
         </div>
 
@@ -271,28 +271,28 @@ export default function GeneratePage() {
           <button
             type="submit"
             disabled={loading}
-            className="rounded-md bg-slate-900 px-6 py-3 text-white hover:bg-slate-700 disabled:opacity-50"
+            className="rounded-md bg-accent px-6 py-3 text-white hover:bg-accent-ink disabled:opacity-50"
           >
-            {loading ? "Generating…" : "Generate assignment & rubric"}
+            {loading ? "Generatingâ€¦" : "Generate assignment & rubric"}
           </button>
-          {error && <p className="mt-3 text-sm text-rose-600">{error}</p>}
+          {error && <p className="mt-3 text-sm text-bad">{error}</p>}
         </div>
       </form>
 
       {result && (
-        <div className="mt-12 border-t border-slate-200 pt-8">
+        <div className="mt-12 border-t border-line pt-8">
           <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-slate-500">Saved to your history.</p>
+            <p className="text-sm text-ink-soft">Saved to your history.</p>
             <div className="flex gap-3">
               <a
                 href={`/api/download/${result.id}`}
-                className="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100"
+                className="rounded-md border border-line px-4 py-2 text-sm hover:bg-paper"
               >
                 Download as Word (.docx)
               </a>
               <Link
                 href="/history"
-                className="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100"
+                className="rounded-md border border-line px-4 py-2 text-sm hover:bg-paper"
               >
                 View history
               </Link>

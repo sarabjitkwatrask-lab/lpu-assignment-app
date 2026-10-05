@@ -1,12 +1,12 @@
-import type { GeneratedAssignment } from "@/lib/schema";
+﻿import type { GeneratedAssignment } from "@/lib/schema";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5">
-      <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+    <section className="rounded-lg border border-line bg-raised p-5">
+      <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink-soft">
         {title}
       </h3>
-      <div className="text-sm leading-relaxed text-slate-800">{children}</div>
+      <div className="text-sm leading-relaxed text-ink">{children}</div>
     </section>
   );
 }
@@ -15,20 +15,20 @@ export default function AssignmentResult({ data }: { data: GeneratedAssignment }
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-slate-900">Assignment Brief</h2>
-        <p className="text-sm text-slate-500">
-          {data.identification.courseCode} — {data.identification.courseTitle}
+        <h2 className="text-xl font-bold text-ink">Assignment Brief</h2>
+        <p className="text-sm text-ink-soft">
+          {data.identification.courseCode} â€” {data.identification.courseTitle}
         </p>
       </div>
 
       <Section title="1. Identification">
         <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <div>
-            <dt className="text-slate-400">Component</dt>
+            <dt className="text-ink-faint">Component</dt>
             <dd>{data.identification.component}</dd>
           </div>
           <div>
-            <dt className="text-slate-400">Marks</dt>
+            <dt className="text-ink-faint">Marks</dt>
             <dd>{data.identification.totalMarks}</dd>
           </div>
         </dl>
@@ -70,20 +70,20 @@ export default function AssignmentResult({ data }: { data: GeneratedAssignment }
         <ol className="list-decimal space-y-2 pl-5">
           {data.stages.map((s, i) => (
             <li key={i}>
-              <strong>{s.name}</strong> — due {s.dueOffset} — submit: {s.artifact} — marks: {s.marks}
+              <strong>{s.name}</strong> â€” due {s.dueOffset} â€” submit: {s.artifact} â€” marks: {s.marks}
             </li>
           ))}
         </ol>
       </Section>
 
       <Section title="7. AI use in this task">
-        <p className="font-medium text-emerald-700">Permitted</p>
+        <p className="font-medium text-good">Permitted</p>
         <ul className="list-disc pl-5">
           {data.aiUse.permitted.map((p, i) => (
             <li key={i}>{p}</li>
           ))}
         </ul>
-        <p className="mt-2 font-medium text-rose-700">Not permitted</p>
+        <p className="mt-2 font-medium text-bad">Not permitted</p>
         <ul className="list-disc pl-5">
           {data.aiUse.notPermitted.map((p, i) => (
             <li key={i}>{p}</li>
@@ -122,17 +122,17 @@ export default function AssignmentResult({ data }: { data: GeneratedAssignment }
       </Section>
 
       <div>
-        <h2 className="text-xl font-bold text-slate-900">Grading Rubric</h2>
-        <p className="text-sm text-slate-500">
-          Four quality levels throughout: Outstanding (86-100%) · Proficient (66-85%) ·
-          Developing (41-65%) · Not yet demonstrated (0-40%)
+        <h2 className="text-xl font-bold text-ink">Grading Rubric</h2>
+        <p className="text-sm text-ink-soft">
+          Four quality levels throughout: Outstanding (86-100%) Â· Proficient (66-85%) Â·
+          Developing (41-65%) Â· Not yet demonstrated (0-40%)
         </p>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-lg border border-line bg-raised">
         <table className="w-full min-w-[900px] table-fixed border-collapse text-sm">
           <thead>
-            <tr className="bg-slate-100 text-left">
+            <tr className="bg-paper text-left">
               <th className="w-1/5 p-3">Criterion</th>
               <th className="p-3">Outstanding</th>
               <th className="p-3">Proficient</th>
@@ -142,11 +142,11 @@ export default function AssignmentResult({ data }: { data: GeneratedAssignment }
           </thead>
           <tbody>
             {data.rubric.map((c, i) => (
-              <tr key={i} className="border-t border-slate-200 align-top">
+              <tr key={i} className="border-t border-line align-top">
                 <td className="p-3">
                   <div className="font-semibold">{c.name}</div>
-                  <div className="text-xs text-slate-500">{c.family}</div>
-                  <div className="text-xs text-slate-500">{c.weightPercent}%</div>
+                  <div className="text-xs text-ink-soft">{c.family}</div>
+                  <div className="text-xs text-ink-soft">{c.weightPercent}%</div>
                 </td>
                 <td className="p-3">{c.levels.outstanding}</td>
                 <td className="p-3">{c.levels.proficient}</td>

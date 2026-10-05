@@ -1,37 +1,57 @@
 import Link from "next/link";
-import { Show, SignInButton } from "@clerk/nextjs";
+import { getUser } from "@/lib/auth";
 
-export default function Home() {
+const STEPS = [
+  {
+    title: "Answer a few questions",
+    body: "Which Lane, which AI Role Level, which Miller tier — explained in plain language, not jargon.",
+  },
+  {
+    title: "Claude drafts both documents",
+    body: "A complete LPU Assignment Brief and a matching rubric, weighted to the guideline’s own C.3 bands.",
+  },
+  {
+    title: "Stress-test before you release it",
+    body: "See up front, criterion by criterion, how much of the task an AI alone could already satisfy.",
+  },
+];
+
+export default async function Home() {
+  const user = await getUser();
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-      <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-        Assignments and rubrics, built to LPU&apos;s AI-era guideline
-      </h1>
-      <p className="mt-4 text-lg text-slate-600">
-        Answer a few questions about your course. Get back a complete, LPU-compliant
-        Assignment Brief and matching grading rubric — grounded in the Lane, AI Role Level,
-        and Miller-tier framework from{" "}
-        <span className="italic">
-          Designing Assignments and Assessment Rubrics in the AI Era
+    <div className="mx-auto max-w-5xl px-6 pb-24 pt-20">
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
+        <span className="rounded-full bg-accent-soft px-4 py-1.5 text-[13px] font-semibold text-accent-ink">
+          Grounded in LPU&rsquo;s AI-era assessment guideline
         </span>
-        .
-      </p>
-      <div className="mt-8">
-        <Show when="signed-in">
-          <Link
-            href="/generate"
-            className="inline-block rounded-md bg-slate-900 px-6 py-3 text-white hover:bg-slate-700"
-          >
-            Create a new assignment
-          </Link>
-        </Show>
-        <Show when="signed-out">
-          <SignInButton mode="modal">
-            <button className="inline-block rounded-md bg-slate-900 px-6 py-3 text-white hover:bg-slate-700">
-              Sign in to get started
-            </button>
-          </SignInButton>
-        </Show>
+        <h1 className="text-5xl font-semibold leading-[1.12] tracking-tight">
+          Assignments and rubrics, built to LPU&rsquo;s AI-era guideline
+        </h1>
+        <p className="max-w-2xl text-lg leading-relaxed text-ink-soft">
+          Answer a few questions about your course. Get back a complete, LPU-compliant Assignment
+          Brief and matching grading rubric — grounded in the Lane, AI Role Level, and Miller-tier
+          framework from &ldquo;Designing Assignments and Assessment Rubrics in the AI Era.&rdquo;
+        </p>
+        <Link
+          href={user ? "/generate" : "/login"}
+          className="mt-2 inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3.5 text-[15px] font-semibold text-white hover:bg-accent-ink"
+        >
+          {user ? "Create a new assignment" : "Sign in to get started"}
+          <span aria-hidden>→</span>
+        </Link>
+      </div>
+
+      <div className="mt-20 grid gap-6 md:grid-cols-3">
+        {STEPS.map((s, i) => (
+          <div key={s.title} className="rounded-2xl border border-line bg-raised p-7">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-accent-soft font-serif text-lg font-semibold text-accent-ink">
+              {i + 1}
+            </div>
+            <h3 className="mb-2 text-lg font-semibold">{s.title}</h3>
+            <p className="text-sm leading-relaxed text-ink-soft">{s.body}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -1,28 +1,8 @@
-import { sql } from "@vercel/postgres";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GeneratedAssignment, StressTestResult } from "./schema";
 
-let schemaReady = false;
-
-export async function ensureSchema() {
-  if (schemaReady) return;
-  await sql`
-    CREATE TABLE IF NOT EXISTS assignments (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id TEXT NOT NULL,
-      course_title TEXT NOT NULL,
-      topic TEXT NOT NULL,
-      discipline TEXT NOT NULL,
-      lane TEXT NOT NULL,
-      ai_role_level TEXT NOT NULL,
-      data JSONB NOT NULL,
-      stress_test JSONB,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-  `;
-  // Additive migration for databases created before the stress-test column existed.
-  await sql`ALTER TABLE assignments ADD COLUMN IF NOT EXISTS stress_test JSONB;`;
-  schemaReady = true;
-}
+// Every query runs as the signed-in user; Postgres row-level security on
+// lpu_assignments guarantees users only ever see or change their own rows.
 
 export type AssignmentRow = {
   id: string;
@@ -37,52 +17,77 @@ export type AssignmentRow = {
   created_at: string;
 };
 
-export async function saveAssignment(params: {
-  userId: string;
-  courseTitle: string;
-  topic: string;
-  discipline: string;
-  lane: string;
-  aiRoleLevel: string;
-  data: GeneratedAssignment;
-}) {
-  await ensureSchema();
-  const { rows } = await sql`
-    INSERT INTO assignments (user_id, course_title, topic, discipline, lane, ai_role_level, data)
-    VALUES (${params.userId}, ${params.courseTitle}, ${params.topic}, ${params.discipline}, ${params.lane}, ${params.aiRoleLevel}, ${JSON.stringify(params.data)}::jsonb)
-    RETURNING id, created_at;
-  `;
-  return rows[0] as { id: string; created_at: string };
+export type AssignmentSummary = Pick<
+  AssignmentRow,
+  "id" | "course_title" | "topic" | "discipline" | "lane" | "ai_role_level" | "created_at"
+>;
+
+export async function saveAssignment(
+  supabase: SupabaseClient,
+  params: {
+    userId: string;
+    courseTitle: string;
+    topic: string;
+    discipline: string;
+    lane: string;
+    aiRoleLevel: string;
+    data: GeneratedAssignment;
+  },
+) {
+  const { data, error } = await supabase
+    .from("lpu_assignments")
+    .insert({
+      user_id: params.userId,
+      course_title: params.courseTitle,
+      topic: params.topic,
+      discipline: params.discipline,
+      lane: params.lane,
+      ai_role_level: params.aiRoleLevel,
+      data: params.data,
+    })
+    .select("id, created_at")
+    .single();
+  if (error) throw new Error(`Saving the assignment failed: ${error.message}`);
+  return data as { id: string; created_at: string };
 }
 
-export async function saveStressTest(userId: string, id: string, result: StressTestResult) {
-  await ensureSchema();
-  await sql`
-    UPDATE assignments
-    SET stress_test = ${JSON.stringify(result)}::jsonb
-    WHERE id = ${id} AND user_id = ${userId};
-  `;
+export async function saveStressTest(
+  supabase: SupabaseClient,
+  id: string,
+  result: StressTestResult,
+) {
+  const { error } = await supabase
+    .from("lpu_assignments")
+    .update({ stress_test: result })
+    .eq("id", id);
+  if (error) throw new Error(`Saving the stress test failed: ${error.message}`);
 }
 
-export async function listAssignments(userId: string) {
-  await ensureSchema();
-  const { rows } = await sql`
-    SELECT id, course_title, topic, discipline, lane, ai_role_level, created_at
-    FROM assignments
-    WHERE user_id = ${userId}
-    ORDER BY created_at DESC
-    LIMIT 100;
-  `;
-  return rows as Omit<AssignmentRow, "data" | "user_id" | "stress_test">[];
+export async function listAssignments(supabase: SupabaseClient) {
+  const { data, error } = await supabase
+    .from("lpu_assignments")
+    .select("id, course_title, topic, discipline, lane, ai_role_level, created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw new Error(`Loading history failed: ${error.message}`);
+  return (data ?? []) as AssignmentSummary[];
 }
 
-export async function getAssignment(userId: string, id: string) {
-  await ensureSchema();
-  const { rows } = await sql`
-    SELECT id, user_id, course_title, topic, discipline, lane, ai_role_level, data, stress_test, created_at
-    FROM assignments
-    WHERE id = ${id} AND user_id = ${userId}
-    LIMIT 1;
-  `;
-  return (rows[0] as AssignmentRow) ?? null;
+export async function getAssignment(supabase: SupabaseClient, id: string) {
+  // Reject non-UUIDs up front so a bad URL is a 404, not a database error.
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return null;
+  }
+  const { data, error } = await supabase
+    .from("lpu_assignments")
+    .select("id, user_id, course_title, topic, discipline, lane, ai_role_level, data, stress_test, created_at")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(`Loading the assignment failed: ${error.message}`);
+  return (data as AssignmentRow | null) ?? null;
+}
+
+export async function deleteAssignment(supabase: SupabaseClient, id: string) {
+  const { error } = await supabase.from("lpu_assignments").delete().eq("id", id);
+  if (error) throw new Error(`Deleting the assignment failed: ${error.message}`);
 }
