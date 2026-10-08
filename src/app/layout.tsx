@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Public_Sans, Source_Serif_4 } from "next/font/google";
 import Link from "next/link";
 import { getUser } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { isOrganiser } from "@/lib/organiser";
 import { signOut } from "./login/actions";
 import "./globals.css";
 
@@ -23,6 +25,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const user = await getUser();
+  const organiser = user ? await isOrganiser(await createClient()) : false;
 
   return (
     <html lang="en" className={`${publicSans.variable} ${sourceSerif.variable} h-full antialiased`}>
@@ -41,6 +44,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                   <Link href="/history" className="font-medium text-ink-soft hover:text-ink">
                     History
                   </Link>
+                  {organiser && (
+                    <Link href="/organiser" className="font-medium text-ink-soft hover:text-ink">
+                      Organiser
+                    </Link>
+                  )}
                   <Link href="/account" className="font-medium text-ink-soft hover:text-ink">
                     Account
                   </Link>

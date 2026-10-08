@@ -12,7 +12,7 @@ import {
 import { getAssignment, saveStressTest } from "@/lib/db";
 import { getUser, isEmailAllowed } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { reserveUsage } from "@/lib/usage";
+import { limitMessage, reserveUsage } from "@/lib/usage";
 
 // Two sequential model calls (attempt, then marking); Fluid compute allows up to 300s.
 export const maxDuration = 300;
@@ -45,16 +45,10 @@ export async function POST(
     return Response.json({ error: "Not found" }, { status: 404 });
   }
 
-  const usage = await reserveUsage(supabase, user.id, "stress_test");
+  const usage = await reserveUsage(supabase, "stress_test");
   if (!usage.ok) {
-    return Response.json(
-      {
-        error: `Daily limit reached: ${usage.limit} stress tests per 24 hours per account. Please try again tomorrow.`,
-      },
-      { status: 429 },
-    );
+    return Response.json({ error: limitMessage(usage, "stress tests") }, { status: 429 });
   }
-
   const client = new Anthropic();
   const model = process.env.ANTHROPIC_MODEL || "claude-opus-5";
   const data = row.data;

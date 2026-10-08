@@ -10,7 +10,7 @@ import {
 import { saveAssignment } from "@/lib/db";
 import { getUser, isEmailAllowed } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { reserveUsage } from "@/lib/usage";
+import { limitMessage, reserveUsage } from "@/lib/usage";
 
 // Opus-class generations can take a minute or two; Vercel Fluid compute allows up to 300s.
 export const maxDuration = 300;
@@ -62,16 +62,10 @@ export async function POST(req: Request) {
 
   const supabase = await createClient();
 
-  const usage = await reserveUsage(supabase, user.id, "generate");
+  const usage = await reserveUsage(supabase, "generate");
   if (!usage.ok) {
-    return Response.json(
-      {
-        error: `Daily limit reached: ${usage.limit} generations per 24 hours per account. Please try again tomorrow.`,
-      },
-      { status: 429 },
-    );
+    return Response.json({ error: limitMessage(usage, "generations") }, { status: 429 });
   }
-
   const client = new Anthropic();
 
   let parsed;

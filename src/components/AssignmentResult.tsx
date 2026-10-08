@@ -1,4 +1,4 @@
-﻿import type { GeneratedAssignment } from "@/lib/schema";
+import type { GeneratedAssignment } from "@/lib/schema";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
