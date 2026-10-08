@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { signIn, signUp, type AuthState } from "./actions";
 
@@ -51,9 +52,19 @@ export default function LoginForm({
           />
         </div>
         <div>
-          <label htmlFor="password" className="mb-1.5 block text-sm font-semibold">
-            Password
-          </label>
+          <div className="mb-1.5 flex items-baseline justify-between">
+            <label htmlFor="password" className="block text-sm font-semibold">
+              Password
+            </label>
+            {isSignIn && (
+              <Link
+                href="/forgot-password"
+                className="text-xs font-semibold text-accent underline-offset-2 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            )}
+          </div>
           <input
             id="password"
             name="password"

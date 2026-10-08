@@ -1,9 +1,9 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isEmailAllowed, safeNextPath } from "@/lib/auth";
+import { getOrigin } from "@/lib/origin";
 
 export type AuthState = { error?: string; message?: string } | null;
 
@@ -41,10 +41,7 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
     return { error: "Sign-up is limited to approved institutional email addresses." };
   }
 
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-  const origin = h.get("origin") ?? `${proto}://${host}`;
+  const origin = await getOrigin();
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
