@@ -87,6 +87,33 @@ export async function getAssignment(supabase: SupabaseClient, id: string) {
   return (data as AssignmentRow | null) ?? null;
 }
 
+// Everything the app stores about this user's assignments and usage (RLS limits it to the caller).
+export async function exportMyData(supabase: SupabaseClient) {
+  const [assignments, usage] = await Promise.all([
+    supabase.from("lpu_assignments").select("*").order("created_at", { ascending: true }),
+    supabase.from("lpu_usage").select("kind, created_at").order("created_at", { ascending: true }),
+  ]);
+  if (assignments.error) throw new Error(`Export failed: ${assignments.error.message}`);
+  if (usage.error) throw new Error(`Export failed: ${usage.error.message}`);
+  return { assignments: assignments.data ?? [], usage: usage.data ?? [] };
+}
+
+// Deletes all of the caller's saved assignments. Usage records newer than 24 hours are
+// deliberately kept (they back the daily limits); older ones are removed when the
+// database policy for that exists, otherwise they are left and handled by the operators.
+export async function eraseMyData(supabase: SupabaseClient, userId: string) {
+  const { count, error } = await supabase
+    .from("lpu_assignments")
+    .delete({ count: "exact" })
+    .eq("user_id", userId);
+  if (error) throw new Error(`Deleting your assignments failed: ${error.message}`);
+
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  await supabase.from("lpu_usage").delete().eq("user_id", userId).lt("created_at", cutoff);
+
+  return { assignmentsDeleted: count ?? 0 };
+}
+
 export async function deleteAssignment(supabase: SupabaseClient, id: string) {
   const { error } = await supabase.from("lpu_assignments").delete().eq("id", id);
   if (error) throw new Error(`Deleting the assignment failed: ${error.message}`);

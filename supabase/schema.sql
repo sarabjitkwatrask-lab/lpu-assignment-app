@@ -58,5 +58,11 @@ create policy "lpu users log their usage"
   on public.lpu_usage for insert to authenticated
   with check ((select auth.uid()) = user_id);
 
+-- Lets a user clear their own usage records older than 24 hours (records from the last
+-- 24 hours stay, because they back the daily limits).
+create policy "lpu users clear old usage"
+  on public.lpu_usage for delete to authenticated
+  using ((select auth.uid()) = user_id and created_at < now() - interval '24 hours');
+
 revoke all on public.lpu_assignments from anon;
 revoke all on public.lpu_usage from anon;

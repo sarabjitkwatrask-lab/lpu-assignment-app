@@ -1,11 +1,11 @@
-"use server";
+﻿"use server";
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isEmailAllowed, safeNextPath } from "@/lib/auth";
 import { getOrigin } from "@/lib/origin";
 
-export type AuthState = { error?: string; message?: string } | null;
+export type AuthState = { error?: string; message?: string; email?: string } | null;
 
 function readCredentials(formData: FormData) {
   return {
@@ -17,7 +17,7 @@ function readCredentials(formData: FormData) {
 
 export async function signIn(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const { email, password, next } = readCredentials(formData);
-  if (!email || !password) return { error: "Enter your email and password." };
+  if (!email || !password) return { error: "Enter your email and password.", email };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -26,19 +26,23 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
       return {
         error:
           "Please confirm your email first. Check your inbox for the link we sent when you created the account.",
+        email,
       };
     }
-    return { error: "Incorrect email or password." };
+    return { error: "Incorrect email or password.", email };
   }
   redirect(next);
 }
 
 export async function signUp(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const { email, password, next } = readCredentials(formData);
-  if (!email || !password) return { error: "Enter an email and a password." };
-  if (password.length < 8) return { error: "Use a password of at least 8 characters." };
+  if (!email || !password) return { error: "Enter an email and a password.", email };
+  if (password.length < 8) return { error: "Use a password of at least 8 characters.", email };
+  if (formData.get("consent") !== "on") {
+    return { error: "Please confirm that you have read the Privacy Notice and the Terms.", email };
+  }
   if (!isEmailAllowed(email)) {
-    return { error: "Sign-up is limited to approved institutional email addresses." };
+    return { error: "Sign-up is limited to approved institutional email addresses.", email };
   }
 
   const origin = await getOrigin();
@@ -52,12 +56,12 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
 
   if (error) {
     if (error.code === "weak_password") {
-      return { error: "That password is too weak. Try a longer one with a mix of characters." };
+      return { error: "That password is too weak. Try a longer one with a mix of characters.", email };
     }
     if (error.code === "over_email_send_rate_limit") {
-      return { error: "Too many sign-up emails were sent recently. Please wait a few minutes and try again." };
+      return { error: "Too many sign-up emails were sent recently. Please wait a few minutes and try again.", email };
     }
-    return { error: "We could not create that account. Please check the details and try again." };
+    return { error: "We could not create that account. Please check the details and try again.", email };
   }
 
   // Email confirmation off: a session exists immediately.
@@ -66,6 +70,7 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
   return {
     message:
       "Almost there. We sent a confirmation link to your email. Open it to finish creating your account, then sign in.",
+    email,
   };
 }
 

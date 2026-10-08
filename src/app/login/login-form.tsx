@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
@@ -47,6 +47,7 @@ export default function LoginForm({
             name="email"
             type="email"
             required
+            defaultValue={state?.email ?? ""}
             autoComplete="email"
             className="w-full rounded-lg border border-line bg-raised px-3 py-2.5 text-sm"
           />
@@ -76,6 +77,28 @@ export default function LoginForm({
           />
         </div>
 
+        {!isSignIn && (
+          <label className="flex items-start gap-3 text-sm leading-snug text-ink-soft">
+            <input
+              type="checkbox"
+              name="consent"
+              required
+              className="mt-0.5 h-4 w-4 shrink-0 accent-accent"
+            />
+            <span>
+              I have read the{" "}
+              <Link href="/privacy" target="_blank" className="font-semibold text-accent underline-offset-2 hover:underline">
+                Privacy Notice
+              </Link>{" "}
+              and the{" "}
+              <Link href="/terms" target="_blank" className="font-semibold text-accent underline-offset-2 hover:underline">
+                Terms
+              </Link>
+              , and I agree that what I type is sent to an AI service to write the draft.
+            </span>
+          </label>
+        )}
+
         {state?.error && (
           <p role="alert" className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad">
             {state.error}
@@ -92,7 +115,7 @@ export default function LoginForm({
           disabled={pending}
           className="w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-white hover:bg-accent-ink disabled:opacity-60"
         >
-          {pending ? "Please wait…" : isSignIn ? "Sign in" : "Create account"}
+          {pending ? "Please waitâ€¦" : isSignIn ? "Sign in" : "Create account"}
         </button>
       </form>
 

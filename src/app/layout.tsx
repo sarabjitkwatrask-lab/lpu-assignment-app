@@ -41,7 +41,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                   <Link href="/history" className="font-medium text-ink-soft hover:text-ink">
                     History
                   </Link>
-                  <span className="hidden text-ink-faint sm:inline">{user.email}</span>
+                  <Link href="/account" className="font-medium text-ink-soft hover:text-ink">
+                    Account
+                  </Link>
+                  <span className="hidden text-ink-faint md:inline">{user.email}</span>
                   <form action={signOut}>
                     <button
                       type="submit"
@@ -64,7 +67,17 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </header>
         <main className="flex-1">{children}</main>
         <footer className="border-t border-line px-6 py-6 text-center text-xs text-ink-faint">
-          Built on LPU&rsquo;s &ldquo;Designing Assignments and Assessment Rubrics in the AI Era&rdquo; guideline.
+          <p>
+            Built on LPU&rsquo;s &ldquo;Designing Assignments and Assessment Rubrics in the AI Era&rdquo; guideline.
+          </p>
+          <p className="mt-2 flex justify-center gap-4">
+            <Link href="/privacy" className="underline-offset-2 hover:underline">
+              Privacy Notice
+            </Link>
+            <Link href="/terms" className="underline-offset-2 hover:underline">
+              Terms
+            </Link>
+          </p>
         </footer>
       </body>
     </html>
